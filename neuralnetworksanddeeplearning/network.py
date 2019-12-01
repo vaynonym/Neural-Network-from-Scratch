@@ -139,7 +139,7 @@ class Network(object):
                                 # move the layers up, using previous results to calculate the results for the next layer
                                 # here only the kth neuron of the previous layer has a connection to w[l][j][k]
                                 for o in range(sizes[L]):
-                                    table[L][o] = self.sigmoid_prime(A[L][o] * table[L-1][k] * self.weights[L][o][k] )
+                                    table[L][o] = self.sigmoid_prime(A[L][o]) * table[L-1][k] * self.weights[L][o][k]
                             else: # each neuron will have a connection to w[l][j][k]
                                 for o in range(sizes[L]):
                                     table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
