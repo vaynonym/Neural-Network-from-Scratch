@@ -107,8 +107,8 @@ class Network(object):
     """
     def backprop(self, x, y):
       
-        nabla_b = [np.zeros(w.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        d_nabla_b = [np.zeros(w.shape) for b in self.biases]
+        d_nabla_w = [np.zeros(w.shape) for w in self.weights]
         # loop over each training example
         for Xi,Yi in zip(x,y):
             d_cost = self.cost_derivative(Xi, Yi)
@@ -135,22 +135,28 @@ class Network(object):
                         for L in range(l, self.num_layers):
                             if(L == l): # a[L][k]/d_w[l][j][k] can be directly calculated:       
                                 table = A[l-1][k] * self.sigmoid_prime(A[l][k])
-                            else:
+                            elif (L-1 == l):
                                 # move the layers up, using previous results to calculate the results for the next layer
-                                if(L-1 == l): # only the kth neuron of the previous layer has a connection to w[l][j][k]
-                                    for o in range(sizes[L]):
-                                        table[L][o] = table[L][k] * self.weights[L][o][k] * self.sigmoid_prime(A[L][o])
-                                else: # each neuron will have a connection to w[l][j][k]
-                                    for o in range(sizes[L]):
-                                        for r in range(sizes[L-1]):
-                                            # can I cut this by one loop by using dot-product on table and weights, ignoring r?
-                                            # pretty sure I can
-                                            table[L][o] = table[L][o] + table[L-1][r] * self.weights[L][o][r]
-                                        table[L][o] = table[L][o] * self.sigmoid_prime(A[L][o])
+                                # only the kth neuron of the previous layer has a connection to w[l][j][k]
+                                for o in range(sizes[L]):
+                                    table[L][o] = self.sigmoid_prime(A[L][o] * table[L-1][k] * self.weights[L][o][k] )
+                            else: # each neuron will have a connection to w[l][j][k]
+                                for o in range(sizes[L]):
+                                    table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
+                                    
+                                    
+                                    # for r in range(sizes[L-1]):
+                                        # can I cut this by one loop by using dot-product on table and weights, ignoring r?
+                                        # pretty sure I can
+                                    #    table[L][o] = table[L][o] + table[L-1][r] * self.weights[L][o][r]
+                                    # table[L][o] = table[L][o] * self.sigmoid_prime(A[L][o])
+                                    
+                                    
 
                         # since we have now determined the chain rule up to the last layer, we just need to multiply
                         # with the term from the derivative of the cost function with respect to the output of the network 
-                        nabla_w[l][k][j] = nabla_w[l][k][j] + sum( d_cost * table[self.num_layers][o])
+                        
+                        d_nabla_w [l][k][j] = nabla_w[l][k][j] + sum( d_cost * table[self.num_layers][o])
 
         return (nabla_w)
 
