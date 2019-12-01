@@ -134,10 +134,10 @@ class Network(object):
                         table = [zeroes(y) for y in sizes[1:]]
                         for L in range(l, self.num_layers):
                             if(L == l): # a[L][k]/d_w[l][j][k] can be directly calculated:       
-                                table = A[l-1][k] * self.sigmoid_prime(A[l][k])
+                                table[L][k] = A[l-1][k] * self.sigmoid_prime(A[l][k])
                             elif (L-1 == l):
                                 # move the layers up, using previous results to calculate the results for the next layer
-                                # only the kth neuron of the previous layer has a connection to w[l][j][k]
+                                # here only the kth neuron of the previous layer has a connection to w[l][j][k]
                                 for o in range(sizes[L]):
                                     table[L][o] = self.sigmoid_prime(A[L][o] * table[L-1][k] * self.weights[L][o][k] )
                             else: # each neuron will have a connection to w[l][j][k]
@@ -151,8 +151,6 @@ class Network(object):
                                     #    table[L][o] = table[L][o] + table[L-1][r] * self.weights[L][o][r]
                                     # table[L][o] = table[L][o] * self.sigmoid_prime(A[L][o])
                                     
-                                    
-
                         # since we have now determined the chain rule up to the last layer, we just need to multiply
                         # with the term from the derivative of the cost function with respect to the output of the network 
                         
