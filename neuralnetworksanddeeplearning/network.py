@@ -1,5 +1,7 @@
 import numpy as np
 
+import random
+
 class Network(object):
     def __init__(self, sizes):
         self.num_layers = len(sizes)
@@ -39,17 +41,17 @@ class Network(object):
             for j in range(epochs):
                 random.shuffle(trainingData)
                 miniBatches = [trainingData[k:k+miniBatchSize] for k in range(0, n, 
-                miniBatchsize)]
+                miniBatchSize)]
                 
                 for miniBatch in miniBatches:
-                    self.updateMinibatch(miniBatch, epsilon)
+                    self.updateMiniBatch(miniBatch, epsilon)
 
-            if test_data:
+            if testData:
                 print("Epoch {0}: {1} / {2}".format(j, self.evaluate(testData), nTest))
             else:
                 print("Epoch {0} complete".format(j))
     
-    def updateMiniBatch(self, miniBatch, eta):
+    def updateMiniBatch(self, miniBatch, epsilon):
         """ Update the network's weight and biases by applying gradient descent using
             backpropagation to a single mini batch. The minibatch is a list of tuples
             (x,y), and epsilon is the learning rate
@@ -65,16 +67,16 @@ class Network(object):
             for each bias and weight, but not yet averaged
         """
         for x,y in miniBatch:
-            delta_nabla_b , delta_nablaw = self.backprop(x,y)
+            delta_nabla_b , delta_nabla_w = self.backprop(x,y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
         
         # adjust weights and bias in the direction determined before,
         # taking into account the learning rate and averaging by dividing
         # through the length of the mini-batch
-        self.weights = [w-(epsilon/len(mini_batch))*nw for w, nw in zip(self.weights,
+        self.weights = [w-(epsilon/len(miniBatch))*nw for w, nw in zip(self.weights,
             nabla_w)]
-        self.biases = [b-(epsilon/len(mini_batch))*nb for b, nb in zip(self.biases,
+        self.biases = [b-(epsilon/len(miniBatch))*nb for b, nb in zip(self.biases,
             nabla_b)]
 
 
@@ -107,7 +109,7 @@ class Network(object):
     """
     def backprop(self, x, y):
       
-        d_nabla_b = [np.zeros(w.shape) for b in self.biases]
+        d_nabla_b = [np.zeros(b.shape) for b in self.biases]
         d_nabla_w = [np.zeros(w.shape) for w in self.weights]
         # loop over each training example
         for Xi,Yi in zip(x,y):
@@ -119,7 +121,7 @@ class Network(object):
                 if (L == 0):
                     A[L] == Xi
                 else:
-                    A[L] = self.sigmoid(np.dot(w , A[L-1]) + b)
+                    A[L] = self.sigmoid( (np.dot(w , A[L-1]) + b))
 
 
             for l in range(1, self.num_layers):
@@ -132,17 +134,17 @@ class Network(object):
                         """
                         # the table is used to calculate the derivatives as we go up the layers
                         # as we'll often use values we have already calculated
-                        table = [zeroes(y) for y in sizes[1:]]
+                        table = [np.zeros(y) for y in self.sizes[1:]]
                         for L in range(l, self.num_layers):
                             if(L == l): # a[L][k]/d_w[l][j][k] can be directly calculated:       
                                 table[L][k] = A[l-1][k] * self.sigmoid_prime(A[l][k])
                             elif (L-1 == l):
                                 # move the layers up, using previous results to calculate the results for the next layer
                                 # here only the kth neuron of the previous layer has a connection to w[l][j][k]
-                                for o in range(sizes[L]):
+                                for o in range(self.sizes[L]):
                                     table[L][o] = self.sigmoid_prime(A[L][o]) * table[L-1][j] * self.weights[L][o][k]
                             else: # each neuron will have a connection to w[l][j][k]
-                                for o in range(sizes[L]):
+                                for o in range(self.sizes[L]):
                                     table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
                                     
                                     
@@ -159,15 +161,15 @@ class Network(object):
                     
                     # biases
 
-                    table = [zeroes(y) for y in sizes[1:]]
+                    table = [np.zeros(y) for y in self.sizes[1:]]
                     for L in range(l, self.num_layers):
                         if(L == 1):
                             table[L][j] = 1
                         elif(L-1 == 1):
-                            for o in range(sizes[L]):
+                            for o in range(self.sizes[L]):
                                 table[L][o] = self.sigmoid_prime(A[L][j]) * table[L-1][j] * self.weights[L][o][j]
                         else:
-                            for o in range(sizes[L]):
+                            for o in range(self.sizes[L]):
                                 table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
 
                     d_nabla_b [l][j] = d_nabla_b[l][j]+ sum( d_cost * table[self.num_layers])
@@ -199,14 +201,14 @@ class Network(object):
         """
         return (outputActivations - y)
 
-    def sigmoid(z):
+    def sigmoid(self, z):
         """sigmoid function"""
         return (1.0/(1.0+np.exp(-z)))
 
 
-    def sigmoid_prime(z):
+    def sigmoid_prime(self, z):
         """derivative of the sigmoid function"""
-        return (sigmoid(z) * (1-sigmoid(z)))
+        return (self.sigmoid(z) * (1-self.sigmoid(z)))
 
     
 
