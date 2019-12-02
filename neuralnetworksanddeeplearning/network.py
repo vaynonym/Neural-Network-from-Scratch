@@ -124,6 +124,7 @@ class Network(object):
 
             for l in range(1, self.num_layers):
                 for j in range(self.sizes[l]):
+                    # weights
                     for k in range(self.sizes[l-1]):
                         """ we are now determining nabla_w[l][k][j], which is the derivative of our cost function
                             with respect to w[l][k][j]. To calculate this, we go downward in the layers using
@@ -139,7 +140,7 @@ class Network(object):
                                 # move the layers up, using previous results to calculate the results for the next layer
                                 # here only the kth neuron of the previous layer has a connection to w[l][j][k]
                                 for o in range(sizes[L]):
-                                    table[L][o] = self.sigmoid_prime(A[L][o]) * table[L-1][k] * self.weights[L][o][k]
+                                    table[L][o] = self.sigmoid_prime(A[L][o]) * table[L-1][j] * self.weights[L][o][k]
                             else: # each neuron will have a connection to w[l][j][k]
                                 for o in range(sizes[L]):
                                     table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
@@ -154,9 +155,26 @@ class Network(object):
                         # since we have now determined the chain rule up to the last layer, we just need to multiply
                         # with the term from the derivative of the cost function with respect to the output of the network 
                         
-                        d_nabla_w [l][k][j] = nabla_w[l][k][j] + sum( d_cost * table[self.num_layers][o])
+                        d_nabla_w [l][k][j] = d_nabla_w[l][k][j] + sum(d_cost * table[self.num_layers])
+                    
+                    # biases
 
-        return (nabla_w)
+                    table = [zeroes(y) for y in sizes[1:]]
+                    for L in range(l, self.num_layers):
+                        if(L == 1):
+                            table[L][j] = 1
+                        elif(L-1 == 1):
+                            for o in range(sizes[L]):
+                                table[L][o] = self.sigmoid_prime(A[L][j]) * table[L-1][j] * self.weights[L][o][j]
+                        else:
+                            for o in range(sizes[L]):
+                                table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
+
+                    d_nabla_b [l][j] = d_nabla_b[l][j]+ sum( d_cost * table[self.num_layers])
+
+
+
+        return (d_nabla_b, d_nabla_w)
 
 
                 
