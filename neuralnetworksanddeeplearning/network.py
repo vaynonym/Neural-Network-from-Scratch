@@ -21,7 +21,7 @@ class Network(object):
                 to compute the output of this layer
                 we do this for every layer via the loop above
             """
-            activations = self.sigmoid(np.dot(w , activations) + b)
+            activations = self.sigmoid((np.dot(w , activations) + b))
 
         return (activations)
 
