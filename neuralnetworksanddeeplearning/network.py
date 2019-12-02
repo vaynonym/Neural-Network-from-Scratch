@@ -111,68 +111,71 @@ class Network(object):
       
         d_nabla_b = [np.zeros(b.shape) for b in self.biases]
         d_nabla_w = [np.zeros(w.shape) for w in self.weights]
-        # loop over each training example
-        for Xi,Yi in zip(x,y):
-            d_cost = self.cost_derivative(Xi, Yi)
-            
-            """A is the table of z at each node, i.e. w[L, j, k] * A[L-1, k] + b[j]"""
-            A = [np.zeros(y) for y in self.sizes]
-            for b, w, L in zip(self.biases, self.weights, range(self.num_layers)):
-                if (L == 0):
-                    A[L] == Xi
-                else:
-                    A[L] = self.sigmoid( (np.dot(w , A[L-1]) + b))
+       
+        
+        
+        
+        """A is the table of z at each node, i.e. w[L, j, k] * A[L-1, k] + b[j]"""
+        A = [np.zeros(y) for y in self.sizes]
+        for b, w, L in zip(self.biases, self.weights, range(self.num_layers)):
+            if (L == 0):
+                A[L] = x
+            else:
+                A[L] = self.sigmoid( (np.dot(w , A[L-1]) + b))
+
+        d_cost = self.cost_derivative(A[self.num_layers - 1], y)
 
 
-            for l in range(1, self.num_layers):
-                for j in range(self.sizes[l]):
-                    # weights
-                    for k in range(self.sizes[l-1]):
-                        """ we are now determining nabla_w[l][k][j], which is the derivative of our cost function
-                            with respect to w[l][k][j]. To calculate this, we go downward in the layers using
-                            the chain rule outlined above.
-                        """
-                        # the table is used to calculate the derivatives as we go up the layers
-                        # as we'll often use values we have already calculated
-                        table = [np.zeros(y) for y in self.sizes[1:]]
-                        for L in range(l, self.num_layers):
-                            if(L == l): # a[L][k]/d_w[l][j][k] can be directly calculated:       
-                                table[L][k] = A[l-1][k] * self.sigmoid_prime(A[l][k])
-                            elif (L-1 == l):
-                                # move the layers up, using previous results to calculate the results for the next layer
-                                # here only the kth neuron of the previous layer has a connection to w[l][j][k]
-                                for o in range(self.sizes[L]):
-                                    table[L][o] = self.sigmoid_prime(A[L][o]) * table[L-1][j] * self.weights[L][o][k]
-                            else: # each neuron will have a connection to w[l][j][k]
-                                for o in range(self.sizes[L]):
-                                    table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
-                                    
-                                    
-                                    # for r in range(sizes[L-1]):
-                                        # can I cut this by one loop by using dot-product on table and weights, ignoring r?
-                                        # pretty sure I can
-                                    #    table[L][o] = table[L][o] + table[L-1][r] * self.weights[L][o][r]
-                                    # table[L][o] = table[L][o] * self.sigmoid_prime(A[L][o])
-                                    
-                        # since we have now determined the chain rule up to the last layer, we just need to multiply
-                        # with the term from the derivative of the cost function with respect to the output of the network 
-                        
-                        d_nabla_w [l][k][j] = d_nabla_w[l][k][j] + sum(d_cost * table[self.num_layers])
-                    
-                    # biases
-
-                    table = [np.zeros(y) for y in self.sizes[1:]]
+        for l in range(1, self.num_layers):
+            for j in range(self.sizes[l]):
+                # weights
+                for k in range(self.sizes[l-1]):
+                    """ we are now determining nabla_w[l][k][j], which is the derivative of our cost function
+                        with respect to w[l][k][j]. To calculate this, we go downward in the layers using
+                        the chain rule outlined above.
+                    """
+                    # the table is used to calculate the derivatives as we go up the layers
+                    # as we'll often use values we have already calculated
+                    derivative_table = [np.zeros(y) for y in self.sizes[1:]]
                     for L in range(l, self.num_layers):
-                        if(L == 1):
-                            table[L][j] = 1
-                        elif(L-1 == 1):
+                        if(L == l): # a[L][k]/d_w[l][j][k] can be directly calculated:       
+                            derivative_table[L][k] = A[l-1][k] * self.sigmoid_prime(np.dot(self.weights[l][j], A[l-1] ) + self.biases[l][j])
+                        elif (L-1 == l):
+                            # move the layers up, using previous results to calculate the results for the next layer
+                            # here only the jth neuron of the previous layer has a connection to w[l][j][k]
                             for o in range(self.sizes[L]):
-                                table[L][o] = self.sigmoid_prime(A[L][j]) * table[L-1][j] * self.weights[L][o][j]
-                        else:
+                                derivative_table[L][o] = self.sigmoid_prime(np.dot(self.weights[l][o], A[L-1]) + self.biases[L][o]) * derivative_table[L-1][j] * self.weights[L][o][j]
+                        else: # each neuron will have a connection to w[l][j][k]
                             for o in range(self.sizes[L]):
-                                table[L][o] = self.sigmoid_prime(A[L][o]) * np.dot(table[L-1], self.weights[L][o])
+                                derivative_table[L][o] = self.sigmoid_prime(np.dot( self.weights[l][o], A[L-1]) + self.biases[L][o]) * np.dot(derivative_table[L-1], self.weights[L][o])
+                                
+                                
+                                # for r in range(sizes[L-1]):
+                                    # can I cut this by one loop by using dot-product on derivative_table and weights, ignoring r?
+                                    # pretty sure I can
+                                #    derivative_table[L][o] = derivative_table[L][o] + derivative_table[L-1][r] * self.weights[L][o][r]
+                                # derivative_table[L][o] = derivative_table[L][o] * self.sigmoid_prime(A[L][o])
+                                
+                    # since we have now determined the chain rule up to the last layer, we just need to multiply
+                    # with the term from the derivative of the cost function with respect to the output of the network 
+                    
+                    d_nabla_w [l][k][j] = np.dot(d_cost,  derivative_table[self.num_layers - 1])
+                
+                # biases
 
-                    d_nabla_b [l][j] = d_nabla_b[l][j]+ sum( d_cost * table[self.num_layers])
+                derivative_table = [np.zeros(y) for y in self.sizes[1:]]
+                for L in range(l, self.num_layers):
+                    if(L == l):
+                        derivative_table[L][j] = 1 * self.sigmoid_prime(np.dot(self.weights[l][j], A[l-1] ) + self.biases[l][j])
+                    elif(L-1 == l):
+                        for o in range(self.sizes[L]):
+                            derivative_table[L][o] = self.sigmoid_prime(np.dot(self.weights[L][j], A[L-1] ) + self.biases[L][j]) * derivative_table[L-1][j] * self.weights[L][o][j]
+                    else:
+                        for o in range(self.sizes[L]):
+                            derivative_table[L][o] = self.sigmoid_prime(np.dot(self.weights[L][j], A[L-1] ) + self.biases[L][j]) * np.dot(derivative_table[L-1], self.weights[L][o])
+
+                
+                d_nabla_b [l][j] = np.dot( d_cost , derivative_table[self.num_layers - 1])
 
 
 
