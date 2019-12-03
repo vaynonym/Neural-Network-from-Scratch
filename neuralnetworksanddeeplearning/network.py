@@ -138,7 +138,7 @@ class Network(object):
         # of the final layer
         """
         derivative_table = [np.zeros(y for y in self.sizes(1:))]
-        for l in reversed(range(self.num_layers)):
+        for l in reversed(range(self.num_layers))[:-1]:
             if (l == self.num_layers): # dC/dZ[self.num_layers]
                 derivative_table[l] = [ self.sigmoid_prime((Z[l][o]) * d_cost for o in self.sizes[l]]
             else: # dC/dz[L][o] = da[L][o]/dz[L][o] *  sum over q of dC/dz[L+1][q] * dz[L+1][q]/da[L][o]
@@ -153,6 +153,17 @@ class Network(object):
                         with respect to w[l][k][j]. To calculate this, we go downward in the layers using
                         the chain rule outlined above.
                     """
+
+
+
+                    """ if this new table works then these two lines should do the trick, hopefully
+                        d_nabla_w[l][k][j] = np.dot(derivative_table[l], weights[l]) * A[l-1][k]
+
+                        if (l == self.num_layers):
+                            d_nabla_w[l][k][j] = derivative_table[l]
+                    """
+                    
+
                     # the table is used to calculate the derivatives as we go up the layers
                     # as we'll often use values we have already calculated
                     derivative_table = [np.zeros(y) for y in self.sizes[1:]]
@@ -178,7 +189,7 @@ class Network(object):
                     # since we have now determined the chain rule up to the last layer, we just need to multiply
                     # with the term from the derivative of the cost function with respect to the output of the network 
                     
-                    d_nabla_w [l][k][j] = np.dot(d_cost,  derivative_table[self.num_layers - 1])
+                    d_nabla_w[l][k][j] = np.dot(d_cost,  derivative_table[self.num_layers - 1])
                 
                 # biases
 
