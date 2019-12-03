@@ -157,10 +157,9 @@ class Network(object):
 
 
                     """ if this new table works then these two lines should do the trick, hopefully
-                        d_nabla_w[l][k][j] = np.dot(derivative_table[l], weights[l]) * A[l-1][k]
+                        d_nabla_w[l][k][j] = derivative_table[l][j] * A[l-1][k]
+                        d_nabla_b[l][j] = derivative_table[l][j]
 
-                        if (l == self.num_layers):
-                            d_nabla_w[l][k][j] = derivative_table[l]
                     """
                     
 
