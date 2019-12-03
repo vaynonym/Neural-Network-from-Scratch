@@ -143,7 +143,7 @@ class Network(object):
                 derivative_table[l] = [ self.sigmoid_prime((Z[l][o]) * d_cost for o in self.sizes[l]]
             else: # dC/dz[L][o] = da[L][o]/dz[L][o] *  sum over q of dC/dz[L+1][q] * dz[L+1][q]/da[L][o]
                 derivative_table[l] = [ self.sigmoid_prime(Z[l][o]] * dot(derivative_table[l+1], 
-                                        (np.transpose(self.weights[l+1])[o])) for o in sizes[l]]
+                                        (np.transpose(self.weights[l+1])[o])) for o in self.sizes[l]]
         """
 
         for l in range(1, self.num_layers):
@@ -154,8 +154,6 @@ class Network(object):
                         with respect to w[l][k][j]. To calculate this, we go downward in the layers using
                         the chain rule outlined above.
                     """
-
-
 
                     """ 
                     if this new table works then these two lines should do the trick, hopefully
