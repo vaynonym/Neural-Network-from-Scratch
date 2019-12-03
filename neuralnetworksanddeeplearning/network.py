@@ -142,7 +142,8 @@ class Network(object):
             if (l == self.num_layers): # dC/dZ[self.num_layers]
                 derivative_table[l] = [ self.sigmoid_prime((Z[l][o]) * d_cost for o in self.sizes[l]]
             else: # dC/dz[L][o] = da[L][o]/dz[L][o] *  sum over q of dC/dz[L+1][q] * dz[L+1][q]/da[L][o]
-                derivative_table[l] = [ self.sigmoid_prime(Z[l][o]] * dot(derivative_table[l+1], (np.transpose(self.weights[l+1])[o])) for o in sizes[l]]
+                derivative_table[l] = [ self.sigmoid_prime(Z[l][o]] * dot(derivative_table[l+1], 
+                                        (np.transpose(self.weights[l+1])[o])) for o in sizes[l]]
         """
 
         for l in range(1, self.num_layers):
@@ -156,9 +157,11 @@ class Network(object):
 
 
 
-                    """ if this new table works then these two lines should do the trick, hopefully
-                        d_nabla_w[l][k][j] = derivative_table[l][j] * A[l-1][k]
-                        d_nabla_b[l][j] = derivative_table[l][j]
+                    """ 
+                    if this new table works then these two lines should do the trick, hopefully
+                    d_nabla_w[l][k][j] = derivative_table[l][j] * A[l-1][k]
+                
+                d_nabla_b[l][j] = derivative_table[l][j]
 
                     """
                     
