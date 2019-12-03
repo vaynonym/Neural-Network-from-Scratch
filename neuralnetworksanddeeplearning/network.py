@@ -115,13 +115,16 @@ class Network(object):
         
         
         
-        """A is the table of z at each node, i.e. w[L, j, k] * A[L-1, k] + b[j]"""
+        """A is the table of a at each node, i.e. sigmoid(z) (or the input for the first layer) """
         A = [np.zeros(y) for y in self.sizes]
+        """Z is the table of z at each node, i.e. dot(w[L, j]  A[L-1]) + b[j]"""
+        Z = [np.zeros(y) for y in self.sizes]
         for b, w, L in zip(self.biases, self.weights, range(self.num_layers)):
             if (L == 0):
                 A[L] = x
             else:
-                A[L] = self.sigmoid( (np.dot(w , A[L-1]) + b))
+                Z[L] = (np.dot(w , A[L-1]) + b)
+                A[L] = self.sigmoid(Z[L])
 
         d_cost = self.cost_derivative(A[self.num_layers - 1], y)
 
@@ -139,15 +142,15 @@ class Network(object):
                     derivative_table = [np.zeros(y) for y in self.sizes[1:]]
                     for L in range(l, self.num_layers):
                         if(L == l): # a[L][k]/d_w[l][j][k] can be directly calculated:       
-                            derivative_table[L][k] = A[l-1][k] * self.sigmoid_prime(np.dot(self.weights[l][j], A[l-1] ) + self.biases[l][j])
+                            derivative_table[L][k] = A[l-1][k] * self.sigmoid_prime(Z[L][j])
                         elif (L-1 == l):
                             # move the layers up, using previous results to calculate the results for the next layer
                             # here only the jth neuron of the previous layer has a connection to w[l][j][k]
                             for o in range(self.sizes[L]):
-                                derivative_table[L][o] = self.sigmoid_prime(np.dot(self.weights[l][o], A[L-1]) + self.biases[L][o]) * derivative_table[L-1][j] * self.weights[L][o][j]
+                                derivative_table[L][o] = self.sigmoid_prime(Z[L][o]) * derivative_table[L-1][j] * self.weights[L][o][j]
                         else: # each neuron will have a connection to w[l][j][k]
                             for o in range(self.sizes[L]):
-                                derivative_table[L][o] = self.sigmoid_prime(np.dot( self.weights[l][o], A[L-1]) + self.biases[L][o]) * np.dot(derivative_table[L-1], self.weights[L][o])
+                                derivative_table[L][o] = self.sigmoid_prime(Z[L][o]) * np.dot(derivative_table[L-1], self.weights[L][o])
                                 
                                 
                                 # for r in range(sizes[L-1]):
