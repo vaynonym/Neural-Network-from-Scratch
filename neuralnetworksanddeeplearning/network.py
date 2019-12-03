@@ -172,10 +172,10 @@ class Network(object):
                         derivative_table[L][j] = 1 * self.sigmoid_prime(Z[l][j])
                     elif(L-1 == l):
                         for o in range(self.sizes[L]):
-                            derivative_table[L][o] = self.sigmoid_prime(Z[L][j]) * derivative_table[L-1][j] * self.weights[L][o][j]
+                            derivative_table[L][o] = self.sigmoid_prime(Z[L][o]) * derivative_table[L-1][j] * self.weights[L][o][j]
                     else:
                         for o in range(self.sizes[L]):
-                            derivative_table[L][o] = self.sigmoid_prime(Z[L][j]) * np.dot(derivative_table[L-1], self.weights[L][o])
+                            derivative_table[L][o] = self.sigmoid_prime(Z[L][o]) * np.dot(derivative_table[L-1], self.weights[L][o])
 
                 
                 d_nabla_b [l][j] = np.dot( d_cost , derivative_table[self.num_layers - 1])
