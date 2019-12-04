@@ -81,32 +81,6 @@ class Network(object):
 
 
 
-    """ L is the current layer
-        k is the index of the neuron from the outgoing layer and 
-        j is the index of the neuron from the layer where the edge with 
-        weight w[l,j,k] is incoming
-
-        r is the index for sum over each neuron from the previous layer we are connected to
-
-        z = w a + b
-    
-
-        How to calculate the derivatives via chain rule
-        d_C / d_w[l,j,k] = sum over r of d_cost * d_a[L,k]/d_z[L,r] * d_z[L,r] / d_w[l,j,k]
-                            = sum over r of d_cost * sigmoid_prime(z[L,r]) * d_z[L,r] / d_w[l,j,k]
-        when z is directly connected to w[l,j,k], this can be directly calculated
-        
-        otherwise we will need to keep going with the chain rule:
-        d_z[L,r] / d_w[l,j,k] = sum over r_next of d_a[L,r]/d_z[L-1,r] * d_z[L-1,r_next]/d_w[l,j,k]
-        If d_a[l-1,r_next] is not directly connected to d_w[l,j,k], we must continue to apply the chain
-        rule. This is the case while L != l
-        
-        When L == l, we can calculate a direct value and the recursion stops:
-        d_a[l,j] / d_w[l,j,k] = a[l-1,k] * sigmoid_prime(z)
-        We will reach this base case because L will is decreased in each step by 1 until L == l and L >= l
-
-        Since we'll do things in for loops as they are more efficient than doing things recursively, we do things backwards
-    """
     def backprop(self, x, y):
       
         d_nabla_b = [np.zeros(b.shape) for b in self.biases]
@@ -125,13 +99,12 @@ class Network(object):
 
         d_cost = self.cost_derivative(A[self.num_layers - 1], y)
 
-        # build table of partial derivatives from the top up
-        # these are only the general partial derivatives with respect
-        # to z. Like this, we only have to consider two layers per
-        # per edge and bias and then just multiply with the value in the table
-        # this should boost efficiency considerably.
-        # this does mean we need to consider special cases later for when we consider edges and biases
-        # of the final layer
+        """ build table of partial derivatives from the top up
+            these are only the general partial derivatives with respect
+            to z. Like this, we only have to consider one layers per
+            edge then just multiply with the value in the table
+            this should boost efficiency considerably.
+        """
         derivative_table = [np.zeros(y for y in self.sizes[1:])]
         for l in list(reversed(range(self.num_layers)))[:-1]:
             if (l == self.num_layers - 1): # dC/dZ[self.num_layers]
@@ -139,18 +112,20 @@ class Network(object):
             else: # dC/dz[L][o] = da[L][o]/dz[L][o] *  sum over q of dC/dz[L+1][q] * dz[L+1][q]/da[L][o]
                 derivative_table[l] = [ self.sigmoid_prime(Z[l][o]) * np.dot(derivative_table[l+1], 
                                         (np.transpose(self.weights[l+1])[o])) for o in self.sizes[l]]
+
+        # since the final step for the biases is dC/dz[l][j] * dz[l][j] / db[l][j] and the 
+        # derivative with respect to the the bias is 1, we can just set the bias derivatives equal to the derivative_table 
         d_nabla_b = derivative_table
 
         for l in range(1, self.num_layers):
             for j in range(self.sizes[l]):
-                # weights
                 for k in range(self.sizes[l-1]):
                     """ we are now determining nabla_w[l][k][j], which is the derivative of our cost function
-                        with respect to w[l][k][j]. To calculate this, we go downward in the layers using
-                        the chain rule outlined above.
+                        with respect to w[l][k][j].
+                        The last step partial derivative is unique to each edge, dC/ dz[l][j]  *  dz[l][j] / dw[l][j][k]
                     """
-                    # if this new table works then these two lines should do the trick, hopefully
                     d_nabla_w[l][k][j] = derivative_table[l][j] * A[l-1][k]
+        
 
         return (d_nabla_b, d_nabla_w)
 
