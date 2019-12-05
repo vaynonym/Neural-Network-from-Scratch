@@ -27,25 +27,27 @@ class Network(object):
 
         return (activations)
 
-    def SGD(self, trainingData, epochs, miniBatchSize, epsilon, testData=None):
-            """
-                Trains the neural network using mini-batch stochastic gradient descent.
-                trainingData is a list of tuples (x,y) where x is the training input and y
-                the label (desired output). epochs is the number of steps we'll take.
-            """
+    def SGD(self, trainingData, epochs, miniBatchSize, epsilon, testData):
+        trainingData = list(trainingData)
+        testData = list(testData)
+        """
+            Trains the neural network using mini-batch stochastic gradient descent.
+            trainingData is a list of tuples (x,y) where x is the training input and y
+            the label (desired output). epochs is the number of steps we'll take.
+        """
 
-            if testData:
-                nTest = len(testData)
-                n = len(trainingData)
+        if testData:
+            nTest = len(testData)
+            n = len(trainingData)
 
-            for j in range(epochs):
-                random.shuffle(trainingData)
-                miniBatches = [trainingData[k:k+miniBatchSize] for k in range(0, n, 
-                miniBatchSize)]
+        for j in range(epochs):
+            random.shuffle(trainingData)
+            miniBatches = [trainingData[k:k+miniBatchSize] for k in range(0, n, 
+            miniBatchSize)]
+            
+            for miniBatch in miniBatches:
+                self.updateMiniBatch(miniBatch, epsilon)
                 
-                for miniBatch in miniBatches:
-                    self.updateMiniBatch(miniBatch, epsilon)
-
             if testData:
                 print("Epoch {0}: {1} / {2}".format(j, self.evaluate(testData), nTest))
             else:
@@ -80,55 +82,35 @@ class Network(object):
             nabla_b)]
 
 
-
+    
     def backprop(self, x, y):
       
         d_nabla_b = [np.zeros(b.shape) for b in self.biases]
         d_nabla_w = [np.zeros(w.shape) for w in self.weights]
        
-        """A is the table of a at each node, i.e. sigmoid(z) (or the input for the first layer) """
+        
+        # A is the table of a at each node, i.e. sigmoid(z) (or the input for the first layer)
         A = [np.zeros(y) for y in self.sizes]
-        """Z is the table of z at each node, i.e. dot(w[L, j]  A[L-1]) + b[j]"""
+        # Z is the table of z at each node, i.e. dot(w[L, j]  A[L-1]) + b[j]
         Z = [np.zeros(y) for y in self.sizes]
-        for b, w, L in zip(self.biases, self.weights, range(self.num_layers)):
-            if (L == 0):
-                A[L] = x
-            else:
-                Z[L] = (np.dot(w , A[L-1]) + b)
-                A[L] = self.sigmoid(Z[L])
-
-        d_cost = self.cost_derivative(A[self.num_layers - 1], y)
-
-        """ build table of partial derivatives from the top up
-            these are only the general partial derivatives with respect
-            to z. Like this, we only have to consider one layers per
-            edge then just multiply with the value in the table
-            this should boost efficiency considerably.
-        """
-        derivative_table = [np.zeros(y for y in self.sizes[1:])]
-        for l in list(reversed(range(self.num_layers)))[:-1]:
-            if (l == self.num_layers - 1): # dC/dZ[self.num_layers]
-                derivative_table[l] = [ self.sigmoid_prime(Z[l][o]) * d_cost for o in self.sizes[l]]
-            else: # dC/dz[L][o] = da[L][o]/dz[L][o] *  sum over q of dC/dz[L+1][q] * dz[L+1][q]/da[L][o]
-                derivative_table[l] = [ self.sigmoid_prime(Z[l][o]) * np.dot(derivative_table[l+1], 
-                                        (np.transpose(self.weights[l+1])[o])) for o in self.sizes[l]]
-
-        # since the final step for the biases is dC/dz[l][j] * dz[l][j] / db[l][j] and the 
-        # derivative with respect to the the bias is 1, we can just set the bias derivatives equal to the derivative_table 
-        d_nabla_b = derivative_table
-
-        for l in range(1, self.num_layers):
-            for j in range(self.sizes[l]):
-                for k in range(self.sizes[l-1]):
-                    """ we are now determining nabla_w[l][k][j], which is the derivative of our cost function
-                        with respect to w[l][k][j].
-                        The last step partial derivative is unique to each edge, dC/ dz[l][j]  *  dz[l][j] / dw[l][j][k]
-                    """
-                    d_nabla_w[l][k][j] = derivative_table[l][j] * A[l-1][k]
+        A[0] = x
+        for b, w, L in zip(self.biases, self.weights, list(range(self.num_layers))[1:]):
+            Z[L] = np.dot(w, A[L-1]) + b
+            A[L] = self.sigmoid(Z[L])
         
 
+     
+        derivative = self.cost_derivative(A[-1], y) * self.sigmoid_prime(Z[-1])
+        d_nabla_b[-1] = derivative
+        d_nabla_w[-1] = np.dot(derivative,  A[-2].transpose())
+        for l in range(2, self.num_layers):
+            derivative =  np.dot(self.weights[-l+1].transpose(), derivative) * self.sigmoid_prime(Z[-l])
+            d_nabla_b[-l] = derivative
+            d_nabla_w[-l] = np.dot(derivative, A[-l-1].transpose())
+            
         return (d_nabla_b, d_nabla_w)
 
+   
 
                 
 
