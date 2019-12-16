@@ -60,6 +60,8 @@ def downscale_array_by_half(array):
     down_scaled_array = np.zeros([four_tuple_list.shape[0], four_tuple_list.shape[1]])
     for i in range(four_tuple_list.shape[0]):
         down_scaled_array[i] = [(list(x)[0] + list(x)[1] + list(x)[2] + list(x)[3] )/4 for x in list(four_tuple_list[i])]
+    
+    return down_scaled_array
 
     
 
