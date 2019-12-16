@@ -47,8 +47,9 @@ def show_image(image, label):
     plt.show()
     time.sleep(5)
 
-def downscale_array_by_half(array):
+def downscale_array_by_half(array, mode="rgb"):
     # list of two adjacent column elements:
+    
     column_array = np.array([list(zip(array[j], array[j+1])) if j+1 < array.shape[0] else list(zip(array[j], array[j]))
                             for j in range(0, array.shape[0], 2)])
     # list of the two adjacest row elements in the column_list:
@@ -58,8 +59,11 @@ def downscale_array_by_half(array):
                         for i in range(0, column_list.shape[0], 1) for j in range(0, column_list.shape[1], 2)]
     four_tuple_array = np.array(four_tuple_list).reshape(int(array.shape[0]/2 + 0.5), int(array.shape[1]/2 + 0.5), 4)
     down_scaled_array = np.zeros([four_tuple_list.shape[0], four_tuple_list.shape[1]])
+    if (mode=="bw"):
     for i in range(four_tuple_list.shape[0]):
         down_scaled_array[i] = [(list(x)[0] + list(x)[1] + list(x)[2] + list(x)[3] )/4 for x in list(four_tuple_list[i])]
+
+    if (mode=="rgb"):
     
     return down_scaled_array
 
