@@ -65,19 +65,7 @@ def downscale_array_by_half(array, mode="rgb"):
     four_tuple_list = list(four_tuple_array)
     # replacing the 2x2 matrix with a value of the mean
     down_scaled_array_list = list(np.zeros([four_tuple_array.shape[0], four_tuple_array.shape[1]]))
-    """
-    if (mode=="bw"):
-        for i in range(four_tuple_array.shape[0]):
-            down_scaled_array[i] = [(list(x)[0] + list(x)[1] + list(x)[2] + list(x)[3] )/4 for x in list(four_tuple_list[i])]
-    for x in list(list(four_tuple_array)[0]):
-        print(x)
-    if (mode=="rgb"):
-        for i in range(four_tuple_array.shape[0]):
-            down_scaled_array[i] = [((list(list(x)[0])[0] + list(list(x)[1])[0] + list(list(x)[2])[0] + list(list(x)[3])[0])/4,
-                                     (list(list(x)[0])[1] + list(list(x)[1])[1] + list(list(x)[2])[1] + list(list(x)[3])[1])/4,
-                                     (list(list(x)[0])[2] + list(list(x)[1])[2] + list(list(x)[2])[2] + list(list(x)[3])[2])/4) 
-                                     for x in list(list(four_tuple_array)[i])]
-    """
+
     if (mode=="bw"):
         for i in range(len(four_tuple_list)):
             down_scaled_array_list[i] = [(list(x)[0] + list(x)[1] + list(x)[2] + list(x)[3] )/4 for x in list(four_tuple_list[i])]
