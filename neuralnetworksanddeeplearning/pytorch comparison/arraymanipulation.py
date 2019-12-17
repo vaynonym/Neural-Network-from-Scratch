@@ -23,10 +23,11 @@ def downscale_array_by_half(array, mode="rgb"):
 
     if (mode=="bw"):
         for i in range(len(four_tuple_list)):
-            down_scaled_array_list[i] = [(list(x)[0] + list(x)[1] + list(x)[2] + list(x)[3] )/4 for x in list(four_tuple_list[i])]
+            # necessary to convert to normal int so we don't overflow when we go over 256 before dividing by 4
+            down_scaled_array_list[i] = [(int(x[0]) + list(x)[1] + list(x)[2] + list(x)[3] )/4 for x in four_tuple_list[i]]
     if (mode=="rgb"):
         for i in range(len(four_tuple_list)):
-            # necessary to convert to normal int so we don't overflow when we go over 256 before dividing by 4
+            # necessary to cast to normal int so we don't overflow when we go over 256 before dividing by 4
             down_scaled_array_list[i] = [((int(x[0][0]) + x[1][0] + x[2][0] + x[3][0])/4,
                                           (int(x[0][1]) + x[1][1] + x[2][1] + x[3][1])/4,
                                           (int(x[0][2]) + x[1][2] + x[2][2] + x[3][2])/4) for x in four_tuple_list[i]]
