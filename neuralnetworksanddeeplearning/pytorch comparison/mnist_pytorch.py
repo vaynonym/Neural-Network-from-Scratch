@@ -20,6 +20,7 @@ from skimage import io, transform
 from PIL import Image
 
 
+
 def load_image(filename):
     img = Image.open(filename)
     img.load()
@@ -56,6 +57,8 @@ def intensity_transformation(array):
 
     return array
 
+TRAINING_ERROR = True
+
 
 # set random seed for comparison
 RANDOM_SEED = 17
@@ -69,7 +72,7 @@ training_data, validation_data, test_data = list(training_data), list(validation
 
 
 # hyperparameters
-NUMBER_OF_EPOCHS = 10
+NUMBER_OF_EPOCHS = 12
 BATCH_SIZE = 4
 LEARNING_RATE = 1e-2
 MOMENTUM = 0.8
@@ -79,9 +82,9 @@ validationloader = torch.utils.data.DataLoader(validation_data, batch_size = BAT
 testloader = torch.utils.data.DataLoader(test_data, batch_size = BATCH_SIZE)
 
 # network topology and activation functions
-sizes_of_layers = [28*28, 50, 30, 20, 10, 10]
-activation_functions = [F.relu, F.relu, F.relu, F.relu, F.relu]
-activation_functions_string = "[F.relu, F.relu, F.relu, F.relu, F.relu]"
+sizes_of_layers = [28*28, 50, 50, 40, 30, 20, 10]
+activation_functions = [F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]
+activation_functions_string = "[F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]"
 
 net = FeedforwardNet(sizes_of_layers, activation_functions)
 
@@ -93,9 +96,11 @@ optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
 log = laTeX_log( 
     RANDOM_SEED, NUMBER_OF_EPOCHS, BATCH_SIZE, LEARNING_RATE, MOMENTUM, 
     sizes_of_layers, activation_functions_string, 
-    len(validation_data), len(test_data),
-    loss_function, str(optimizer).split(" ")[0] + "()"
+    len(training_data), len(validation_data), len(test_data),
+    loss_function, str(optimizer).split(" ")[0] + "()", LOG_TRAINING_SET=TRAINING_ERROR
 )
+
+
 
 
 # Training the neural network
@@ -110,6 +115,17 @@ for epoch in range(NUMBER_OF_EPOCHS):
         optimizer.step()
     print("Iteration: " + str(epoch + 1))
     
+    if(TRAINING_ERROR):
+        correct = 0
+        total = 0
+        for inputs, labels in trainloader:
+            outputs = net(Variable(inputs))
+            _, predicted = torch.max(outputs.data,1)
+            total += labels.size(0)
+            correct += (predicted==labels).sum()
+        print("Accuracy on training set: {} out of {}".format(correct,total))
+        log.add_trainingset_result(int(correct))
+
     correct = 0
     total = 0
     for (inputs, labels) in validationloader:
@@ -119,7 +135,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
         correct += (predicted == labels).sum()
     print('Accuracy on the validation set: {} out of {}'.format(correct, total))
 
-    log.add_epoch_result(int(correct))
+    log.add_validationset_result(int(correct))
         
 
 correct = 0

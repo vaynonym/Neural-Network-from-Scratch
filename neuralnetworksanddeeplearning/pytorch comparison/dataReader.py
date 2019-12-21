@@ -71,6 +71,14 @@ def load_data_wrapper():
     test_data = zip(test_inputs, te_d[1])
     return (training_data, validation_data, test_data)
 
+def load_data_wrapper_torch():
+    """load data and fit to pytorch library"""
+    tr_d, va_d, te_d = load_data()
+    training_data = zip(tr_d[0], tr_d[1])
+    validation_data = zip(va_d[0], va_d[1])
+    test_data = zip(te_d[0], te_d[1]) 
+    return (training_data, validation_data, test_data)
+
 def vectorized_result(j):
     """Return a 10-dimensional unit vector with a 1.0 in the jth
     position and zeroes elsewhere.  This is used to convert a digit
