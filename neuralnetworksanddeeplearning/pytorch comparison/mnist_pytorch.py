@@ -49,21 +49,29 @@ def examples():
     im = Image.fromarray(sampleArray.reshape(28,28) *255)
     show_image(im, label_number(sampleLabel))
 
-def rotation_transformation(array):
+def adjust_learning_rate(optimizer, epoch, lr_decay, lr_decay_epoch):
+    """Decay learning rate by a factor of lr_decay every lr_decay_epoch epochs"""
+    if epoch % lr_decay_epoch:
+        return optimizer
+    
+    for param_group in optimizer.param_groups:
+        param_group['lr'] *= lr_decay
+    return optimizer
+    
 
-    return array
-
-def intensity_transformation(array):
-
-    return array
+transformation = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.RandomAffine(degrees = 6.3, translate = (0.05, 0.05)),
+    transforms.ToTensor()])
 
 TRAINING_ERROR = True
 
 
 # set random seed for comparison
-RANDOM_SEED = 17
+RANDOM_SEED = 129837
 torch.cuda.manual_seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
+# np.random.seed(17)
 
 
 training_data, validation_data, test_data = dataReader.load_data_wrapper_torch()
@@ -72,21 +80,44 @@ training_data, validation_data, test_data = list(training_data), list(validation
 
 
 # hyperparameters
-NUMBER_OF_EPOCHS = 12
+NUMBER_OF_EPOCHS = 28
 BATCH_SIZE = 4
-LEARNING_RATE = 1e-2
+LEARNING_RATE = 1 * 1e-2
 MOMENTUM = 0.8
 
-trainloader = torch.utils.data.DataLoader(training_data, batch_size=BATCH_SIZE, shuffle=True)
+class MNIST_Dataset(Dataset):
+    def __init__(self, data, transform = None):
+        self.data = data
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        sample = self.data[idx]
+        if self.transform:
+            sample = (self.transform(sample[0].reshape([28,28])).reshape([28*28]), sample[1])
+        return sample
+        
+# print(training_data[0][0])
+# print(training_data[0][1])
+
+training_dataset = MNIST_Dataset(training_data, transform= transformation)
+
+
+trainloader = torch.utils.data.DataLoader(training_dataset, batch_size=BATCH_SIZE, shuffle=True)
 validationloader = torch.utils.data.DataLoader(validation_data, batch_size = BATCH_SIZE)
 testloader = torch.utils.data.DataLoader(test_data, batch_size = BATCH_SIZE)
 
 # network topology and activation functions
-sizes_of_layers = [28*28, 50, 50, 40, 30, 20, 10]
-activation_functions = [F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]
-activation_functions_string = "[F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]"
+sizes_of_layers = [28*28, 100, 80, 50, 30, 10]
+activation_functions = [F.relu, F.relu, F.relu, F.relu, F.relu]
+activation_functions_string = "[F.relu, F.relu, F.relu, F.relu, F.relu]"
 
 net = FeedforwardNet(sizes_of_layers, activation_functions)
+
 
 loss_function = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
@@ -107,11 +138,12 @@ log = laTeX_log(
 for epoch in range(NUMBER_OF_EPOCHS):
     train_loader_iter = iter(trainloader)
     for batch_idx, (inputs, labels) in enumerate(train_loader_iter):
-        inputs, labels = (Variable(inputs).float()), Variable(labels)
+        inputs, labels = Variable(inputs).float(), Variable(labels)
         optimizer.zero_grad()
         output = net(inputs)
         loss = loss_function(output, labels)
         loss.backward()
+        # print(net.module_list[0].weight.grad)
         optimizer.step()
     print("Iteration: " + str(epoch + 1))
     
@@ -134,6 +166,9 @@ for epoch in range(NUMBER_OF_EPOCHS):
         total += labels.size(0)
         correct += (predicted == labels).sum()
     print('Accuracy on the validation set: {} out of {}'.format(correct, total))
+
+    # multiply learning rate with 0.1 every 10 epochs
+    optimizer = adjust_learning_rate(optimizer, epoch, 0.1, 10)
 
     log.add_validationset_result(int(correct))
         
