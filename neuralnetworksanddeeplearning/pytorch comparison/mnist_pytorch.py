@@ -16,7 +16,7 @@ import dataReader
 from feedforward import FeedforwardNet
 from laTeX_log import laTeX_log
 from MNIST_Dataset import MNIST_Dataset
-from train_network import train_network
+
 
  
 transformation = transforms.Compose([
