@@ -128,6 +128,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
     log.add_validationset_result(int(correct))
 
     if(correct/total >= best_validation_rate):
+        best_validation_rate = correct/total
         net.save_NN_state("NN_States/best_state.pt")
 
         
