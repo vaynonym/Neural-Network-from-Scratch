@@ -34,3 +34,10 @@ class FeedforwardNet(nn.Module):
             x = self.activations[i](x)
             i = i + 1
         return x
+
+    def save_NN_state(self, PATH):
+        torch.save(self.state_dict(), PATH)
+
+    def load_NN_state(self, PATH):
+        self.load_state_dict(torch.load(PATH))
+        self.eval()
