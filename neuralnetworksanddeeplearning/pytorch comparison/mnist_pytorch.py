@@ -16,46 +16,33 @@ import dataReader
 from feedforward import FeedforwardNet
 from laTeX_log import laTeX_log
 from MNIST_Dataset import MNIST_Dataset
+from train_network import train_network
 
-
-
-
-
-
-
-def adjust_learning_rate(optimizer, epoch, lr_decay, lr_decay_epoch):
-    """Decay learning rate by a factor of lr_decay every lr_decay_epoch epochs"""
-    if epoch % lr_decay_epoch:
-        return optimizer
-    
-    for param_group in optimizer.param_groups:
-        param_group['lr'] *= lr_decay
-    return optimizer
-    
-
-
-
-
+ 
 transformation = transforms.Compose([
     transforms.ToPILImage(),
-    transforms.RandomAffine(degrees = 6.3, translate = (0.05, 0.05)),
+    transforms.RandomAffine(degrees = 5.0, translate = (0.01, 0.01), scale=(0.8,1.2)),
     transforms.ToTensor()])
 
-TRAINING_ERROR = True
-
-
+CUDA_FLAG = False
+TRAINING_ERROR = True # determines whether or not the accuracy on the trainingset will be calculated and logged
+LOAD_STATE = False # determines whether or not the initial state of the NN's weights and biases will be loaded from a file
 # set random seed for comparison
-RANDOM_SEED = 22
+RANDOM_SEED = 17
 torch.cuda.manual_seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
 # np.random.seed(RANDOM_SEED)
 
 # hyperparameters
-NUMBER_OF_EPOCHS = 10
-BATCH_SIZE = 4
+NUMBER_OF_EPOCHS = 25
+BATCH_SIZE = 6
 LEARNING_RATE = 1 * 1e-2
 MOMENTUM = 0.8
 
+# network topology and activation functions
+sizes_of_layers = [784, 150, 100, 80, 50, 30, 30, 30, 10, 10, 10, 10]
+activation_functions = [F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]
+activation_functions_string = "[F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]"
 
 # Load and prepare data for use
 training_data, validation_data, test_data = dataReader.load_data_wrapper_torch()
@@ -66,13 +53,15 @@ trainloader = torch.utils.data.DataLoader(training_dataset, batch_size=BATCH_SIZ
 validationloader = torch.utils.data.DataLoader(validation_data, batch_size = BATCH_SIZE)
 testloader = torch.utils.data.DataLoader(test_data, batch_size = BATCH_SIZE)
 
-# network topology and activation functions
-sizes_of_layers = [28*28, 75, 50, 30, 10]
-activation_functions = [F.relu, F.relu, F.relu, F.relu]
-activation_functions_string = "[F.relu, F.relu, F.relu, F.relu]"
 
 net = FeedforwardNet(sizes_of_layers, activation_functions)
-
+SAVE_STATE_PATH = "NN_States/" + str(sizes_of_layers) + "_best_state.pt"
+LOAD_STATE_PATH = "NN_States/" + "" + "best_state.pt"
+if(LOAD_STATE):
+    # loads all layers
+    # net.load_NN_state(LOAD_STATE_PATH)
+    # loads all layers excluding the last one and works even if model has more layers afterward
+    net.load_partial_NN_state(LOAD_STATE_PATH)
 
 loss_function = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
@@ -85,6 +74,18 @@ log = laTeX_log(
     len(training_data), len(validation_data), len(test_data),
     loss_function, str(optimizer).split(" ")[0] + "()", LOG_TRAINING_SET=TRAINING_ERROR
 )
+
+
+def adjust_learning_rate(optimizer, epoch, lr_decay, lr_decay_epoch):
+    """Decay learning rate by a factor of lr_decay every lr_decay_epoch epochs"""
+    if epoch % lr_decay_epoch or epoch == 0:
+        return optimizer
+    
+    for param_group in optimizer.param_groups:
+        param_group['lr'] *= lr_decay
+        print("Adjusted learning rate by a factor of {}".format(lr_decay))
+    return optimizer
+   
 
 
 best_validation_rate = 0
@@ -129,8 +130,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
 
     if(correct/total >= best_validation_rate):
         best_validation_rate = correct/total
-        net.save_NN_state("NN_States/best_state.pt")
-
+        net.save_NN_state(SAVE_STATE_PATH)
         
 
 correct = 0
