@@ -8,85 +8,71 @@ from torch.utils.data import Dataset, TensorDataset, DataLoader # for dealing wi
 import torchvision # for dealing with vision data
 import torchvision.transforms as transforms # for modifying vision data to run it through models
 
-import matplotlib.pyplot as plt # for plotting
+
 import numpy as np
 import time
 
 import dataReader
 from feedforward import FeedforwardNet
 from laTeX_log import laTeX_log
-
-from skimage import io, transform
-from PIL import Image
+from MNIST_Dataset import MNIST_Dataset
 
 
 
-def load_image(filename):
-    img = Image.open(filename)
-    img.load()
-    data = np.asarray(img, dtype="int32")
-    return data
 
-def show_image(image, label):
-    print('The label is %d' % label)
-    plt.imshow(image)
-    plt.show()
+
+
+
+def adjust_learning_rate(optimizer, epoch, lr_decay, lr_decay_epoch):
+    """Decay learning rate by a factor of lr_decay every lr_decay_epoch epochs"""
+    if epoch % lr_decay_epoch:
+        return optimizer
+    
+    for param_group in optimizer.param_groups:
+        param_group['lr'] *= lr_decay
+    return optimizer
     
 
-def label_number(labelvector):
-    labelvector = [labelvector[i] * i for i in range(len(labelvector))]
-    return max(labelvector)
 
-def examples():
-    print(np.array(training_data).shape)
 
-    sample = list(training_data)[0]
-    sampleArray = sample[0]
-    sampleLabel = sample[1]
-    print(sample)
-    # rearrange data from a simple vector to a matrix representing the image
-    # then changing values into standard 8 bit values and converting to image:
-    im = Image.fromarray(sampleArray.reshape(28,28) *255)
-    show_image(im, label_number(sampleLabel))
 
-def rotation_transformation(array):
-
-    return array
-
-def intensity_transformation(array):
-
-    return array
+transformation = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.RandomAffine(degrees = 6.3, translate = (0.05, 0.05)),
+    transforms.ToTensor()])
 
 TRAINING_ERROR = True
 
 
 # set random seed for comparison
-RANDOM_SEED = 17
+RANDOM_SEED = 22
 torch.cuda.manual_seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
-
-
-training_data, validation_data, test_data = dataReader.load_data_wrapper_torch()
-
-training_data, validation_data, test_data = list(training_data), list(validation_data), list(test_data)
-
+# np.random.seed(RANDOM_SEED)
 
 # hyperparameters
-NUMBER_OF_EPOCHS = 12
+NUMBER_OF_EPOCHS = 10
 BATCH_SIZE = 4
-LEARNING_RATE = 1e-2
+LEARNING_RATE = 1 * 1e-2
 MOMENTUM = 0.8
 
-trainloader = torch.utils.data.DataLoader(training_data, batch_size=BATCH_SIZE, shuffle=True)
+
+# Load and prepare data for use
+training_data, validation_data, test_data = dataReader.load_data_wrapper_torch()
+training_data, validation_data, test_data = list(training_data), list(validation_data), list(test_data)
+training_dataset = MNIST_Dataset(training_data, transform= transformation)
+
+trainloader = torch.utils.data.DataLoader(training_dataset, batch_size=BATCH_SIZE, shuffle=True)
 validationloader = torch.utils.data.DataLoader(validation_data, batch_size = BATCH_SIZE)
 testloader = torch.utils.data.DataLoader(test_data, batch_size = BATCH_SIZE)
 
 # network topology and activation functions
-sizes_of_layers = [28*28, 50, 50, 40, 30, 20, 10]
-activation_functions = [F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]
-activation_functions_string = "[F.relu, F.relu, F.relu, F.relu, F.relu, F.relu]"
+sizes_of_layers = [28*28, 75, 50, 30, 10]
+activation_functions = [F.relu, F.relu, F.relu, F.relu]
+activation_functions_string = "[F.relu, F.relu, F.relu, F.relu]"
 
 net = FeedforwardNet(sizes_of_layers, activation_functions)
+
 
 loss_function = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
@@ -101,17 +87,17 @@ log = laTeX_log(
 )
 
 
-
-
+best_validation_rate = 0
 # Training the neural network
 for epoch in range(NUMBER_OF_EPOCHS):
     train_loader_iter = iter(trainloader)
     for batch_idx, (inputs, labels) in enumerate(train_loader_iter):
-        inputs, labels = (Variable(inputs).float()), Variable(labels)
+        inputs, labels = Variable(inputs).float(), Variable(labels)
         optimizer.zero_grad()
         output = net(inputs)
         loss = loss_function(output, labels)
         loss.backward()
+        # print(net.module_list[0].weight.grad)
         optimizer.step()
     print("Iteration: " + str(epoch + 1))
     
@@ -135,7 +121,15 @@ for epoch in range(NUMBER_OF_EPOCHS):
         correct += (predicted == labels).sum()
     print('Accuracy on the validation set: {} out of {}'.format(correct, total))
 
+    
+    # multiply learning rate with 0.1 every 10 epochs
+    optimizer = adjust_learning_rate(optimizer, epoch, 0.1, 10)
+
     log.add_validationset_result(int(correct))
+
+    if(correct/total >= best_validation_rate):
+        net.save_NN_state("NN_States/best_state.pt")
+
         
 
 correct = 0
