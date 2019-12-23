@@ -31,7 +31,10 @@ class FeedforwardNet(nn.Module):
         
         for module in self.module_list:
             x = module(x)
-            x = self.activations[i](x)
+            # apparently the last layer of activations breaks the cost function, so we ignore them
+            if(i != (len(self.module_list) - 1)):
+                x = self.activations[i](x)
+            
             i = i + 1
         return x
 
@@ -41,3 +44,18 @@ class FeedforwardNet(nn.Module):
     def load_NN_state(self, PATH):
         self.load_state_dict(torch.load(PATH))
         self.eval()
+ 
+
+    """This function attempts to load all layers, excluding the last one, into the network 
+    based on a file provided by PATH. This even works when the model has more layers than
+    the one of the loaded state. However, the sizes of the layers must still fit.
+    """
+    def load_partial_NN_state(self, PATH):
+        loaded_state = torch.load(PATH)
+        own_state = self.state_dict()
+        for name, param in loaded_state.items():
+            if((name, param) != list(loaded_state.items())[-1]
+                and (name, param) != list(loaded_state.items())[-2]):
+                
+                own_state[name].copy_(param)
+
