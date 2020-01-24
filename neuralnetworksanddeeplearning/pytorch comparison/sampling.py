@@ -11,7 +11,7 @@ def load_image(filename):
 
 def show_image(image, label):
     print('The label is %d' % label)
-    plt.imshow(image)
+    plt.imshow(image, cmap="gray")
     plt.show()
     
 
@@ -19,14 +19,14 @@ def label_number(labelvector):
     labelvector = [labelvector[i] * i for i in range(len(labelvector))]
     return max(labelvector)
 
-def examples():
-    print(np.array(training_data).shape)
-
-    sample = list(training_data)[0]
+def examples(sample):
     sampleArray = sample[0]
     sampleLabel = sample[1]
-    print(sample)
+    print("Label:")
+    print(sampleLabel)
+    print("array")
+    print(sampleArray)
     # rearrange data from a simple vector to a matrix representing the image
     # then changing values into standard 8 bit values and converting to image:
-    im = Image.fromarray(sampleArray.reshape(28,28) *255)
-    show_image(im, label_number(sampleLabel))
+    im = Image.fromarray(sampleArray.reshape(28,28), mode="L")
+    show_image(im, sampleLabel)
