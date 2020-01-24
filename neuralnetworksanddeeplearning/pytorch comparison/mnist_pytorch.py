@@ -17,6 +17,7 @@ from feedforward import FeedforwardNet
 from laTeX_log import laTeX_log
 from MNIST_Dataset import MNIST_Dataset
 from training import train_network
+import sampling
 
         
 def test_network():
@@ -36,8 +37,8 @@ def test_network():
     return (correct, total)
 
 
-CUDA_FLAG = True # determines whether the GPU is used for calculations
-TRAINING_ERROR = True # determines whether or not the accuracy on the trainingset will be calculated and logged
+CUDA_FLAG = False # determines whether the GPU is used for calculations
+TRAINING_ERROR = False # determines whether or not the accuracy on the trainingset will be calculated and logged
 LOAD_STATE = False # determines whether or not the initial state of the NN's weights and biases will be loaded from a file
 
 # set random seed for comparison
@@ -51,23 +52,24 @@ transformation = transforms.Compose([
     transforms.ToTensor(),
     # add noise which adds or subtracts proportionally to x. This way, 
     # every value that started as 0 will remain 0 and we won't have negative values 
-    transforms.Lambda(lambda x : x + 0.03 * x * (2 * (torch.rand(x.shape)) - 1)),
+    transforms.Lambda(lambda x : x + 0.05 * x * (2 * (torch.rand(x.shape)) - 1)),
     transforms.ToPILImage(),
-    transforms.RandomAffine(degrees = 5.0, translate = (0.04, 0.04), scale=(0.9, 1.1)),
+    transforms.RandomAffine(degrees = 5.0, translate = (0.05, 0.05), scale=(0.90, 1.1)),
     transforms.ToTensor()
     ])
 
 
+
 # hyperparameters
-NUMBER_OF_EPOCHS = 50
-BATCH_SIZE = 200
-LEARNING_RATE = 2 * 1e-1
+NUMBER_OF_EPOCHS = 70
+BATCH_SIZE = 1000
+LEARNING_RATE = 5 * 1e-1
 MOMENTUM = 0.5
 USE_DROPOUT = False
-dropout_probability = 0.5
+dropout_probability = 0.2
 
 # network topology and activation functions
-sizes_of_layers = [784, 3000, 3000, 3000, 3000, 10]
+sizes_of_layers = [784, 5000, 3000, 3000, 3000, 10]
 activation_functions = [ F.relu, F.relu, F.relu, F.relu, F.relu]
 activation_functions_string = "[F.relu, F.relu, F.relu]"
 
@@ -75,6 +77,10 @@ activation_functions_string = "[F.relu, F.relu, F.relu]"
 training_data, validation_data, test_data = dataReader.load_data_wrapper_torch()
 training_data, validation_data, test_data = list(training_data), list(validation_data), list(test_data)
 training_dataset = MNIST_Dataset(training_data, transform=transformation)
+
+print(training_data[0])
+# sampling.show_sample_transformations(training_data[0][0], training_data[0][1])
+sampling.examples(training_data)
 
 trainloader = torch.utils.data.DataLoader(training_dataset, batch_size=BATCH_SIZE, shuffle=True)
 validationloader = torch.utils.data.DataLoader(validation_data, batch_size = BATCH_SIZE)
@@ -107,15 +113,15 @@ log = laTeX_log(
 )
 
 # the big function
-train_network(net, optimizer, NUMBER_OF_EPOCHS, loss_function, trainloader, validationloader, log, SAVE_STATE_PATH, CUDA_FLAG, TRAINING_ERROR)
+# train_network(net, optimizer, NUMBER_OF_EPOCHS, loss_function, trainloader, validationloader, log, SAVE_STATE_PATH, CUDA_FLAG, TRAINING_ERROR)
 
 # testing state of the network at the end of training
-correct, total = test_network()
+# correct, total = test_network()
 print('Accuracy on the test set after training: {} out of {}'.format(correct, total))
 
 # testing state of the network at the time of best performance on the validation set
 net.load_NN_state(SAVE_STATE_PATH)
-correct, total = test_network()
+# correct, total = test_network()
 print('Best Iteration: Accuracy on the test set: {} out of {}'.format(correct, total))
 log.add_testset_result(int(correct))
 
