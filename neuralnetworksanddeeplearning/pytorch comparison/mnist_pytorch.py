@@ -36,7 +36,7 @@ def test_network():
     return (correct, total)
 
 
-CUDA_FLAG = True # determines whether the GPU is used for calculations
+CUDA_FLAG = False # determines whether the GPU is used for calculations
 TRAINING_ERROR = True # determines whether or not the accuracy on the trainingset will be calculated and logged
 LOAD_STATE = False # determines whether or not the initial state of the NN's weights and biases will be loaded from a file
 
@@ -59,17 +59,17 @@ transformation = transforms.Compose([
 
 
 # hyperparameters
-NUMBER_OF_EPOCHS = 50
-BATCH_SIZE = 200
+NUMBER_OF_EPOCHS = 15
+BATCH_SIZE = 50
 LEARNING_RATE = 2 * 1e-1
 MOMENTUM = 0.5
 USE_DROPOUT = False
 dropout_probability = 0.5
 
 # network topology and activation functions
-sizes_of_layers = [784, 3000, 3000, 3000, 3000, 10]
-activation_functions = [ F.relu, F.relu, F.relu, F.relu, F.relu]
-activation_functions_string = "[F.relu, F.relu, F.relu]"
+sizes_of_layers = [784, 150, 50, 30, 10]
+activation_functions = [ F.relu, F.relu, F.relu, F.relu]
+activation_functions_string = "[F.relu, F.relu, F.relu, F.relu]"
 
 # Load and prepare data for use
 training_data, validation_data, test_data = dataReader.load_data_wrapper_torch()
