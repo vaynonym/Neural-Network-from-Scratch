@@ -12,7 +12,6 @@ def adjust_learning_rate(optimizer, epoch, lr_decay, lr_decay_epoch):
     
     for param_group in optimizer.param_groups:
         param_group['lr'] *= lr_decay
-        print("Adjusted learning rate by a factor of {}".format(lr_decay))
     return optimizer
 
 def adjust_momentum(optimizer, maximum, step_size):
@@ -81,7 +80,7 @@ def train_network(net, optimizer, NUMBER_OF_EPOCHS, loss_function, trainloader, 
 
         
         # reduce learning rate whenever a certain number of epochs are reached to better converge
-        optimizer = adjust_learning_rate(optimizer, epoch, 0.9, 1)
+        optimizer = adjust_learning_rate(optimizer, epoch, 0.95, 1)
         optimizer = adjust_momentum(optimizer, 0.9, 0.02)
 
         log.add_validationset_result(int(correct))
