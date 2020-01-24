@@ -9,6 +9,21 @@ import gzip
 # Third-party libraries
 import numpy as np
 
+def load_hiragana():
+    """
+    The training-data is returned as a tuple with two entries. The first contains
+    the actual training images in the form of 28x28 grayscale. The second the label,
+    one of 49 classes.
+    validation_data and test_data are similar. 
+    """
+
+    training_data = zip(np.load("k49-test-imgs.npz"), np.load("k49-test-labels.npz"))
+    validation_data = list(training_data)[:46473]
+    training_data = list(training_data)[46473:]
+    test_data = zip(np.load("k49-train-imgs.npz"), np.load("k49-train-labels.npz"))
+
+    return training_data, validation_data, test_data
+
 def load_data():
 
     """

@@ -137,12 +137,12 @@ class laTeX_log:
         if (self.LOG_TRAINING_SET):
             outputfile.write(
                 r"\multicolumn{4}{|c|}{"+ "\n" + 
-                r"\textbf{Accuracy on Testset after Training:}} \\" + "\n" + 
+                r"\textbf{Accuracy on Testset for best Iteration on Validationset}} \\" + "\n" + 
                 r"\multicolumn{4}{|c|}{" + "\n")
         else:
             outputfile.write(
                 r"\multicolumn{3}{|c|}{"+ "\n" + 
-                r"\textbf{Accuracy on Testset after Training:}} \\" + "\n" + 
+                r"\textbf{Accuracy on Testset for best Iteration on Validationset:}} \\" + "\n" + 
                 r"\multicolumn{3}{|c|}{" + "\n")
         outputfile.write(
             r"\textbf{" + str(self.testset_result) + " out of {}".format(self.testset_size) + r"}" + "\n" + 
