@@ -8,11 +8,12 @@ import gzip
 
 # Third-party libraries
 import numpy as np
+import torch
 
 import os
 
 
-base_path = "C:/Programming/Python Programming/Neural Networks/Python-Neural-Network-Practice/neuralnetworksanddeeplearning/pytorch comparison/"
+base_path = "C:/Users/Tim/Desktop/Programming/Neural Networks/Python NN/Python-Neural-Network-Practice/neuralnetworksanddeeplearning/pytorch comparison/"
 
 
 def load_hiragana():
@@ -25,16 +26,16 @@ def load_hiragana():
     
     training_data_images_raw = np.load(base_path + "Kuzushiji-49/k49-train-imgs.npz")['arr_0']
 
-    training_data_images = [np.reshape(array, (784, 1)) for array in list(training_data_images_raw)] 
+    training_data_images = [np.array(np.reshape(array / 255, (784)), dtype="float32") for array in list(training_data_images_raw)] 
     training_data_labels = np.load(base_path + "Kuzushiji-49/k49-train-labels.npz")['arr_0']
     
     test_data_images_raw  = np.load(base_path + "Kuzushiji-49/k49-test-imgs.npz")['arr_0']
-    test_data_images = [np.reshape(array, (784, 1)) for array in list(test_data_images_raw)] 
+    test_data_images = [np.array(np.reshape(array / 255, (784)), dtype="float32") for array in list(test_data_images_raw)] 
     test_data_labels = np.load(base_path + "Kuzushiji-49/k49-test-labels.npz")['arr_0']
 
     training_data = list(zip(training_data_images, training_data_labels))
-    validation_data = training_data[:46473]
-    training_data = training_data[46473:]
+    validation_data = list(training_data[:46473])
+    training_data = list(training_data[46473:])
 
     test_data = list(zip(test_data_images, test_data_labels))
 
@@ -64,7 +65,7 @@ def load_data():
     """
 
 
-    f = gzip.open("mnist/mnist.pkl.gz", "rb")
+    f = gzip.open(base_path + "mnist/mnist.pkl.gz", "rb")
    
 
     training_data, validation_data, test_data = pickle.load(f, encoding='latin1')
@@ -119,3 +120,5 @@ def vectorized_result(j):
     e = np.zeros((10, 1))
     e[j] = 1.0
     return e
+
+
