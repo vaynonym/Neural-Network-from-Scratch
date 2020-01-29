@@ -37,7 +37,7 @@ def test_network():
     return (correct, total)
 
 CUDA_FLAG = False # determines whether the GPU is used for calculations
-TRAINING_ERROR = True # determines whether or not the accuracy on the trainingset will be calculated and logged
+TRAINING_ERROR = False # determines whether or not the accuracy on the trainingset will be calculated and logged
 LOAD_STATE = False # determines whether or not the initial state of the NN's weights and biases will be loaded from a file
 
 # set random seed for comparison
@@ -55,7 +55,7 @@ USE_DROPOUT = False
 dropout_probability = 0.5
 
 # network topology and activation functions
-sizes_of_layers = [784, 150, 50, 30, 10]
+sizes_of_layers = [784, 50, 50, 10]
 activation_functions = [ F.relu, F.relu, F.relu, F.relu]
 activation_functions_string = "[F.relu, F.relu, F.relu, F.relu]"
 
@@ -79,7 +79,7 @@ net = FeedforwardNet(sizes_of_layers, activation_functions, USE_DROPOUT=USE_DROP
 if(CUDA_FLAG):
     net = net.cuda()
 
-for data in training_data[8:20]:
+for data in training_data[8:10]:
     sampling.examples(data)
 
 
