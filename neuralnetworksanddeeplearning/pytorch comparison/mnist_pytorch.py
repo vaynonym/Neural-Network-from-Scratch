@@ -59,7 +59,7 @@ transformation = transforms.Compose([
 
 
 # hyperparameters
-NUMBER_OF_EPOCHS = 15
+NUMBER_OF_EPOCHS = 10
 BATCH_SIZE = 50
 LEARNING_RATE = 2 * 1e-1
 MOMENTUM = 0.5
@@ -67,8 +67,8 @@ USE_DROPOUT = False
 dropout_probability = 0.5
 
 # network topology and activation functions
-sizes_of_layers = [784, 150, 50, 30, 10]
-activation_functions = [ F.relu, F.relu, F.relu, F.relu]
+sizes_of_layers = [784, 50, 50, 10]
+activation_functions = [ F.relu, F.relu, F.relu]
 activation_functions_string = "[F.relu, F.relu, F.relu, F.relu]"
 
 # Load and prepare data for use
