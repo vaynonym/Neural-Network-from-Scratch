@@ -39,7 +39,7 @@ def train_network(net, optimizer, NUMBER_OF_EPOCHS, loss_function, trainloader, 
             
             # inference
             output = net(inputs)
-            loss = loss_function(output, labels)
+            loss = loss_function(output, labels.long())
             # the iconic trifecta 
             optimizer.zero_grad()
             loss.backward()
