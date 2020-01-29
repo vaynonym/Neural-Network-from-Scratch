@@ -11,7 +11,7 @@ def load_image(filename):
 
 def show_image(image, label):
     print('The label is %d' % label)
-    plt.imshow(image, cmap="gray")
+    plt.imshow(image)
     plt.show()
     
 
@@ -28,5 +28,5 @@ def examples(sample):
     print(sampleArray)
     # rearrange data from a simple vector to a matrix representing the image
     # then changing values into standard 8 bit values and converting to image:
-    im = Image.fromarray(sampleArray.reshape(28,28), mode="L")
+    im = Image.fromarray(sampleArray.reshape(28,28) * 255)
     show_image(im, sampleLabel)
